@@ -121,7 +121,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
     model.Minimize(highest - lowest)
 
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = 600.0 
+    solver.parameters.max_time_in_seconds = 30.0
     status = solver.Solve(model)
 
     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
@@ -137,8 +137,8 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                     if s_obj.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]:
                         staff.last_PH = s_obj.date 
                         # print(f"TESING IMMUNITY: {staff.name} immunity status - {staff.PH_Immunity(s_obj.date)}")
-                        # print(f"{staff.name} immunity ends on {staff.immunity_expiry_date}")
-                    results.append({"Date": s_obj.date, "Shift": s_obj.type.name, "Staff": staff.name})
+                        print(f"{staff.name} immunity starts on {s_obj.date} and ends on {staff.immunity_expiry_date}")
+                    results.append({"Date": s_obj.date, "Shift": s_obj.type.name, "Staff": staff.name, "PH Immunity Period": staff.immunity_duration})
         return results 
     return None
 

@@ -25,11 +25,13 @@ class ShiftType(Enum): # Fixed
 class Staff: # Fluid
     """Represents a staff member and their scheduling constraints"""
     name: str
+    immunity_duration: str
     role: Role
     ytd_points: float = 0.0
     blackout_dates: Set[date] = field(default_factory=set) # Ensures every Staff object created has their own unique dates
     bidding_dates: Set[date] = field(default_factory=set)
     last_PH: Optional[date] = None
+    
 
     @property
     def immunity_expiry_date(self):

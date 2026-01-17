@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from src.models import Staff, Role
 
 def load_staff_from_excel(file_path):
@@ -35,6 +35,12 @@ def load_staff_from_excel(file_path):
                 return pd.to_datetime(val).date()
             except:
                 return None
+               
+        # last_ph_date = parse_single_date(row.get('Last_PH_Worked', ''))
+        # if last_ph_date:
+        #     immunity_val = f"{(last_ph_date).strftime("%Y-%m-%d")} - {(last_ph_date + timedelta(days=31)).strftime("%Y-%m-%d")}"
+        # else:
+        #     immunity_val = "No PH Worked" 
 
         staff = Staff(
             name=str(row['Name']),
@@ -42,7 +48,8 @@ def load_staff_from_excel(file_path):
             ytd_points=float(row['Ytd_Points']),
             blackout_dates=set(clean_date_input(row.get('Blackout_Dates', ""))),
             bidding_dates=set(clean_date_input(row.get('PH_Bidding', ""))),
-            last_PH=parse_single_date(row.get('Last_PH_Worked', ""))
+            last_PH=parse_single_date(row.get('Last_PH_Worked', "")),
+            # immunity_duration=immunity_val
             # PROBLEM: SHOULD LOAD PH_IMMUNITY? IF SO, HOW TO INLCUDE SHIFT_DATE ARGUMENT SINCE PH_IMMUNITY IS A FUNCTION
         )
         staff_list.append(staff)

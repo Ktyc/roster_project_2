@@ -93,10 +93,10 @@ if uploaded_file is not None and start_date <= end_date:
 
 # --- UI: Staff Preview --- 
     with st.expander("View Staff Directory & Constraints", expanded=False):
-        st.dataframe(st.session_state.raw_staff_df, width='stretch', hide_index=True)
+        st.dataframe(st.session_state.raw_staff_df, use_container_width=True, hide_index=True)
 
     # Roster Generation
-    if st.button("Generate Optimized Roster", type="primary", width='stretch'):
+    if st.button("Generate Optimized Roster", type="primary", use_container_width=True):
         with st.spinner("AI is generating the best shift distribution..."):
             assignments = assign_staff_to_shift(curr_shifts, st.session_state.staff_list)
             
@@ -116,7 +116,7 @@ if uploaded_file is not None and start_date <= end_date:
         # Pivot the data so Dates are rows and Shift Types are columns
         pivot_df = df_roster.pivot(index="Date", columns="Shift", values="Staff")
         
-        # FIXED: Corrected column names to match ShiftType Enum names exactly
+        # Corrected column names to match ShiftType Enum names exactly
         cols_priority = ["WEEKDAY_PM", "WEEKEND_AM", "WEEKEND_PM", "PUBLIC_HOL_AM", "PUBLIC_HOL_PM"]
         existing_cols = [c for c in cols_priority if c in pivot_df.columns]
         pivot_df = pivot_df.reindex(columns=existing_cols).fillna("-")
@@ -125,7 +125,7 @@ if uploaded_file is not None and start_date <= end_date:
         display_roster = pivot_df.copy()
         display_roster.index = [d.strftime("%a, %d %b") for d in display_roster.index]
         
-        st.dataframe(display_roster, width='stretch')
+        st.dataframe(display_roster, use_container_width=True)
 
         # --- POINTS RECONCILIATION ---
         st.divider()
@@ -177,7 +177,7 @@ if uploaded_file is not None and start_date <= end_date:
         fig.update_traces(textposition='outside')
         fig.update_layout(xaxis_tickangle=-45, height=500)
         
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
         
         # Metric
         # Assuming df_recon is your Points Reconciliation DataFrame
@@ -210,7 +210,7 @@ if uploaded_file is not None and start_date <= end_date:
         points="all", 
         title="Statistical Spread of Points"
     )
-        st.plotly_chart(fig_box, width='stretch')
+        st.plotly_chart(fig_box, use_container_width=True)
 
 
         # --- DOWNLOAD ---
@@ -224,7 +224,7 @@ if uploaded_file is not None and start_date <= end_date:
             data=output.getvalue(),
             file_name=f"Roster_{start_date}.xlsx",
             mime="application/vnd.ms-excel",
-            width='stretch'
+            use_container_width=True
         )
 
 else:
