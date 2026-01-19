@@ -62,35 +62,54 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                         # print(f"BLOCKING: {staff.name} cannot work AM shift on {shift.date}")
                         model.Add(today_pm_var + tomorrow_var <= 1)
 
-    # # Hard Constraint: Public Holiday Bidding
-    for s_idx, shift in enumerate(shifts):
-        s_bidders = []
-        for staff in staff_list:
-            if shift.date in staff.bidding_dates: # Bidding dates only contains Public Holidays
-                #if not staff.PH_Immunity:
-                s_bidders.append(staff)
-        if len(s_bidders) != 0: # Have Bidders, IF NO BIDDERS CODE SHOULD SITLL FOLLOW HARD CONSTRAINT 1
-            model.Add(sum(assignments[(bidder.name, s_idx)] for bidder in s_bidders) == 1) # Only one
-
-    # # Hard Constraint: PH Immunity (CANT TEST YET)
+    # Hard Constraint: Bidding + PH Immunity
     for s_idx, shift in enumerate(shifts):
         if shift.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]:
-            for staff in staff_list:
-                if staff.PH_Immunity(shift.date): 
-                    model.Add(assignments[(staff.name, s_idx)] == 0)
+            s_bidders = [st for st in staff_list if shift.date in st.bidding_dates] # Eligible for PH shift EVEN if PH immunity 
+            if s_bidders: # if there are bidders
+                for bidder in s_bidders: 
+                    # Check type and role, then remove ineligble bidders from pool
+                    if shift.type == ShiftType.PUBLIC_HOL_PM:
+                        if bidder.role == Role.NO_PM:
+                            model.Add(assignments[(bidder.name, s_idx)] == 0)
+                    if shift.date.weekday() < 5:
+                        if bidder.role == Role.WEEKEND_ONLY:
+                            model.Add(assignments[(bidder.name, s_idx)] == 0)
+                eligible_bidders = [
+                    b for b in s_bidders 
+                    if not (shift.type == ShiftType.PUBLIC_HOL_PM and b.role == Role.NO_PM)
+                    and not (shift.date.weekday() < 5 and b.role == Role.WEEKEND_ONLY)
+                ]
+                if eligible_bidders:
+                    model.Add(sum(assignments[(bidder.name, s_idx)] for bidder in eligible_bidders) == 1)
+            
+            else: # NO BIDDERS
+                eligible_pool = [st for st in staff_list if not st.is_immune_on(shift.date)]
+                if eligible_pool: 
+                    for eligible in eligible_pool: 
+                        # Check type and role, then remove ineligble staffs from pool
+                        if shift.type == ShiftType.PUBLIC_HOL_PM:
+                            if eligible.role == Role.NO_PM:
+                                eligible_pool.remove(eligible)
+                                model.Add(assignments[(eligible.name, s_idx)] == 0)
+                        if shift.date.weekday() < 5:
+                            if eligible.role == Role.WEEKEND_ONLY:
+                                eligible_pool.remove(eligible)
+                                model.Add(assignments[(eligible.name, s_idx)] == 0)
+                        model.Add(sum(assignments[(eligible.name, s_idx)] for eligible in eligible_pool) == 1)
 
 
     # Soft Constraint: Fairness
-    highest = model.NewIntVar(0, 100000, "Highest Points")
-    lowest = model.NewIntVar(0, 100000, "Lowest Points")
-    for staff in staff_list:
-        model.Add(highest >= int(staff.ytd_points * 10))
-        model.Add(lowest <= int(staff.ytd_points * 10))
+    # highest = model.NewIntVar(0, 100000, "Highest Points")
+    # lowest = model.NewIntVar(0, 100000, "Lowest Points")
+    # for staff in staff_list:
+    #     model.Add(highest >= int(staff.ytd_points * 10))
+    #     model.Add(lowest <= int(staff.ytd_points * 10))
 
-    highest_lowest_diff = highest - lowest
+    # highest_lowest_diff = highest - lowest
 
-    # Finalize and Solve
-    model.Minimize(highest_lowest_diff)
+    # # Finalize and Solve
+    # model.Minimize(highest_lowest_diff)
 
     # Create a dictionary to hold the TOTAL points for each staff
     total_staff_points = {}
@@ -138,7 +157,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                         staff.last_PH = s_obj.date 
                         # print(f"TESING IMMUNITY: {staff.name} immunity status - {staff.PH_Immunity(s_obj.date)}")
                         print(f"{staff.name} immunity starts on {s_obj.date} and ends on {staff.immunity_expiry_date}")
-                    results.append({"Date": s_obj.date, "Shift": s_obj.type.name, "Staff": staff.name, "PH Immunity Period": staff.immunity_duration})
+                    results.append({"Date": s_obj.date, "Shift": s_obj.type.name, "Staff": staff.name, "PH Immunity Period": f"{staff.last_PH} - {staff.immunity_expiry_date}"})
         return results 
     return None
 

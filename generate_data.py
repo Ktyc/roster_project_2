@@ -43,11 +43,15 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
         bidding = ", ".join(random.sample(holidays_2026, k=random.randint(1, 3))) if PH_Avail == "Yes" else "N/A"
         
         # For Immunity 
-        # last_PH_Worked = random.choice(["Yes","No"])
+        last_PH_Worked = random.choice(["Yes","No"])
         # last_PH_Test = ["2026-01-15"] # INITIAL. FOR TESTING ONLY, never take into account dates on the roster yet
-        # last_PH_date_Test = [date(2026, 1, 15)]
-        # last_PH_shift = random.choice(last_PH_date_Test) if last_PH_Worked == "Yes" else "N/A"
-
+        last_PH_date_Test = [date(2026, 1, 18)]
+        last_PH_shift = random.choice(last_PH_date_Test) if last_PH_Worked == "Yes" else "N/A"
+        if type(last_PH_shift) != str: 
+            immunity_end = last_PH_shift + timedelta(days=100)
+            immunity_period = f"{last_PH_shift} - {immunity_end}"
+        else:
+            immunity_period = "N/A"
 
         # PH_Immunity = random.choice["Immune", "Not Immune"]
 
@@ -64,7 +68,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
             "Blackout_Dates": blackout_str,
             "PH_Bidding": bidding,
             "Last_PH_Worked": last_PH_shift,
-            "PH Immunity Duration": immunity_val
+            "PH Immunity Duration": immunity_period
         })
 
     df = pd.DataFrame(data)

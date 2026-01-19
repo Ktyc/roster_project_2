@@ -25,7 +25,7 @@ class ShiftType(Enum): # Fixed
 class Staff: # Fluid
     """Represents a staff member and their scheduling constraints"""
     name: str
-    immunity_duration: str
+    # immunity_duration: str
     role: Role
     ytd_points: float = 0.0
     blackout_dates: Set[date] = field(default_factory=set) # Ensures every Staff object created has their own unique dates
@@ -38,13 +38,13 @@ class Staff: # Fluid
         if self.last_PH is None:
             return None
         else:
-            return self.last_PH + timedelta(days=31)
+            return self.last_PH + timedelta(days=100)
     
-    def PH_Immunity(self, shift_date: date): # IS THIS RLLY HOW I SHOUDL WRITE IT? WITH SHIFT_DATE IN THE PARAMETER
+    def is_immune_on(self, shift_date: date): # IS THIS RLLY HOW I SHOUDL WRITE IT? WITH SHIFT_DATE IN THE PARAMETER
         if self.last_PH is None:
             return False
         else:
-            return self.last_PH <= shift_date < self.immunity_expiry_date  
+            return self.last_PH < shift_date <= self.immunity_expiry_date  
 
 
 
@@ -54,3 +54,5 @@ class Shift: # Fluid
     date: date
     type: ShiftType
     assigned_staff: Optional[Staff] = None # Optional[Staff] = None just enable for this attribute to be None to cater for cases where no staff are assigned yet
+
+
