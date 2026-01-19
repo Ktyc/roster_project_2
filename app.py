@@ -11,6 +11,26 @@ from datetime import date, timedelta
 # 1. Setup the page
 st.set_page_config(page_title="AI Staff Scheduler", layout="wide")
 
+def handle_file_upload():
+    """Triggered immediately when a new file is uploaded or removed"""
+    if st.session_state.uploader_key is not None:
+        # Load fresh data from the buffer
+        staff = load_staff_from_excel(st.session_state.uploader_key)
+        raw_df = pd.read_excel(st.session_state.uploader_key)
+        
+        # Update session state with new data
+        st.session_state.staff_list = staff
+        st.session_state.raw_staff_df = raw_df
+        st.session_state.initial_points = {s.name: s.ytd_points for s in staff}
+        
+        # Reset any previous generation results to avoid "Ghost Data"
+        if "last_assignments" in st.session_state:
+            del st.session_state.last_assignments
+    else:
+        # If file is cleared, reset the data
+        st.session_state.staff_list = None
+        st.session_state.raw_staff_df = None
+
 # 2. Header
 st.title("AI Duty Roster Planner")
 
@@ -36,32 +56,14 @@ with st.sidebar:
 
     st.divider()
     st.header("3. Data Upload")
-    uploaded_file = st.file_uploader("Upload Staff Excel", type=["xlsx"])
-    
-    if uploaded_file is not None:
-        if "staff_list" not in st.session_state:
-            # We load the data once and keep it in session state
-            st.session_state.staff_list = load_staff_from_excel(uploaded_file)
-            st.session_state.raw_staff_df = pd.read_excel(uploaded_file)
-            # Snapshot of points before the engine runs
-            st.session_state.initial_points = {s.name: s.ytd_points for s in st.session_state.staff_list}
 
-    st.divider()
-    st.header("4. Refresh")
-    if uploaded_file is not None:
-        # Use the button or a change in the file to trigger a reload
-        if st.sidebar.button("Reload Staff Data"):
-            # This clears the old data and forces a fresh load
-            st.session_state.staff_list = load_staff_from_excel(uploaded_file)
-            st.session_state.raw_staff_df = pd.read_excel(uploaded_file)
-            st.session_state.initial_points = {s.name: s.ytd_points for s in st.session_state.staff_list}
-            st.sidebar.success("Data Refreshed!")
+    uploaded_file = st.file_uploader(
+        "Upload Staff Excel", 
+        type=["xlsx"], 
+        key="uploader_key",        
+        on_change=handle_file_upload 
+    )
 
-        # Fallback for the very first load
-        if "staff_list" not in st.session_state:
-            st.session_state.staff_list = load_staff_from_excel(uploaded_file)
-            st.session_state.raw_staff_df = pd.read_excel(uploaded_file)
-            st.session_state.initial_points = {s.name: s.ytd_points for s in st.session_state.staff_list}
 
 if uploaded_file is not None and start_date <= end_date:
     # 4. Main logic
@@ -91,7 +93,7 @@ if uploaded_file is not None and start_date <= end_date:
             curr_shifts.append(Shift(date=d, type=ShiftType.WEEKDAY_PM))
     
 
-# --- UI: Staff Preview --- 
+    # --- UI: Staff Preview --- 
     with st.expander("View Staff Directory & Constraints", expanded=False):
         st.dataframe(st.session_state.raw_staff_df, use_container_width=True, hide_index=True)
 
@@ -158,7 +160,7 @@ if uploaded_file is not None and start_date <= end_date:
         st.subheader("Workload Distribution Analysis")
         
         # Create a bar chart showing the final totals
-        # This helps you visually identify if someone is getting too many/few points
+        # Helps to visually identify if someone is getting too many/few points
         fig = px.bar(
             df_recon, 
             x="Staff Name", 
@@ -180,7 +182,7 @@ if uploaded_file is not None and start_date <= end_date:
         st.plotly_chart(fig, use_container_width=True)
         
         # Metric
-        # Assuming df_recon is your Points Reconciliation DataFrame
+        # Assuming df_recon is Points Reconciliation DataFrame
         std_dev = df_recon["Final Total"].std()
         mean_pts = df_recon["Final Total"].mean()
 
@@ -195,7 +197,7 @@ if uploaded_file is not None and start_date <= end_date:
             point_gap = df_recon["Final Total"].max() - df_recon["Final Total"].min()
             st.metric("Fairness Gap (Max-Min)", f"{round(point_gap, 1)} pts")
 
-        # Interpretation Help
+        # Help with interpretation
         if std_dev < 2.0:
             st.success("✅ Excellent Fairness: Points are tightly clustered.")
         elif std_dev < 5.0:
@@ -214,16 +216,40 @@ if uploaded_file is not None and start_date <= end_date:
 
 
         # --- DOWNLOAD ---
+        st.divider()
+        st.subheader("💾 Export & Update")
+        
+        # --- DATABASE UPDATE SHEET (Mapped to io_handler requirements) ---
+        update_data = []
+        for s in st.session_state.staff_list:
+            if s.last_PH:
+                immunity_duration = f"{s.last_PH} - {s.immunity_expiry_date}"
+            else:
+                immunity_duration = "N/A"
+            update_data.append({
+                "Name": s.name,
+                "Role": s.role.name,
+                "Ytd Points": round(s.ytd_points, 1), 
+                "Blackout_Dates": ",".join([d.strftime('%Y-%m-%d') for d in s.blackout_dates]),
+                "PH Bidding": ",".join([d.strftime('%Y-%m-%d') for d in s.bidding_dates]),
+                "Last PH Worked": s.last_PH.strftime('%Y-%m-%d') if s.last_PH else "N/A",
+                "PH Immunity Duration": immunity_duration
+            })
+
+        df_update = pd.DataFrame(update_data)
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            pivot_df.to_excel(writer, sheet_name='Roster')
-            pd.DataFrame(recon_data).to_excel(writer, sheet_name='Points', index=False)
-        
+            # We put the "Master" sheet first so the loader finds it immediately
+            df_update.to_excel(writer, sheet_name='Staff_Master', index=False)
+            # The pivot table for humans goes on the second sheet
+            display_roster.to_excel(writer, sheet_name='Roster_View')
+
         st.download_button(
-            "Download Roster (Excel)",
+            label="🔄 Download Updated Staff Master (For Re-upload)",
             data=output.getvalue(),
-            file_name=f"Roster_{start_date}.xlsx",
-            mime="application/vnd.ms-excel",
+            file_name=f"Staff_Update_{date.today()}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
 

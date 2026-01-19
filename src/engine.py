@@ -47,13 +47,13 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
     for s_idx, current_shift in enumerate(shifts):
         if current_shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_PM, ShiftType.PUBLIC_HOL_PM]:
 
-            # Now, look for any shift that happens "tomorrow"
+            # Look for any shift that happens "tomorrow"
             for next_s_idx, next_shift in enumerate(shifts):
                 # Check if next_shift is exactly 1 day after current_shift
                 days_diff = (next_shift.date - current_shift.date).days
 
                 if days_diff == 1:
-                    # for every staff member...
+                    # For every staff member...
                     for staff in staff_list:
                         # Law: Alice_Today_PM + Alice_Tomorrow_Any <= 1
                         today_pm_var = assignments[(staff.name, s_idx)]
@@ -100,17 +100,6 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
 
 
     # Soft Constraint: Fairness
-    # highest = model.NewIntVar(0, 100000, "Highest Points")
-    # lowest = model.NewIntVar(0, 100000, "Lowest Points")
-    # for staff in staff_list:
-    #     model.Add(highest >= int(staff.ytd_points * 10))
-    #     model.Add(lowest <= int(staff.ytd_points * 10))
-
-    # highest_lowest_diff = highest - lowest
-
-    # # Finalize and Solve
-    # model.Minimize(highest_lowest_diff)
-
     # Create a dictionary to hold the TOTAL points for each staff
     total_staff_points = {}
 
@@ -156,7 +145,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                     if s_obj.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]:
                         staff.last_PH = s_obj.date 
                         # print(f"TESING IMMUNITY: {staff.name} immunity status - {staff.PH_Immunity(s_obj.date)}")
-                        print(f"{staff.name} immunity starts on {s_obj.date} and ends on {staff.immunity_expiry_date}")
+                        # print(f"{staff.name} immunity starts on {s_obj.date} and ends on {staff.immunity_expiry_date}")
                     results.append({"Date": s_obj.date, "Shift": s_obj.type.name, "Staff": staff.name, "PH Immunity Period": f"{staff.last_PH} - {staff.immunity_expiry_date}"})
         return results 
     return None
