@@ -32,18 +32,18 @@ python -m venv venv
 source venv/bin/activate
 
 # Install dependencies
-pip install -r requirements.txt```
-
+pip install -r requirements.txt
+```
 
 ### To generate test file:
 ```bash
 python generate_data.py
-
+```
 
 ### To launch dashboard interface:
 ```bash
 streamlit run app.py
-
+```
 
 ## File Structure
 ```text
@@ -61,3 +61,4 @@ roster_project_main/
 ├── app.py                    # Streamlit UI entry point
 ├── README.md                 # Project documentation
 └── requirements.txt          # Python dependencies
+```
