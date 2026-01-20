@@ -1,9 +1,9 @@
 # AI Staff Roster Engine
-An automated rostering engine built using Google OR-Tools to assign staff to shifts based on constraints that were given.
+This is an automated rostering engine built using Google OR-Tools to assign staff to shifts based on constraints that were given.
 
 ## Key Features
 1. Ensures fairness in shift assignment using a point based system
-2. Constraint Based
+2. Constraint Based:
   - Assigns staffs to shifts based on their roles.
   - Staff will not be able to work the next shift following a PM shift for safety reasons.
   - Staff will be entitled to take blackout dates where they would not be assigned a shift.
