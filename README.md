@@ -17,11 +17,11 @@ An automated rostering engine built using Google OR-Tools to assign staff to shi
 - **Data Handling:** Pandas, Openpyxl
 
 ## Installation & Setup
-<pre>
 To get this project running on your local machine, follow these steps:
-
+<pre>
 Bash
-
+</pre>
+<pre>
 # Clone the repo
 git clone https://github.com/Ktyc/roster_project_2.git
 
@@ -31,12 +31,31 @@ source venv/bin/activate  # or .\venv\Scripts\activate on Windows
 
 # Install dependencies
 pip install -r requirements.txt
+
+
+To generate test file:
+<pre>
+Bash
+</pre>
+<pre>
+```bash
+python generate_data.py```
+</pre>
+
+To launch dashboard interface:
+<pre>
+Bash
+</pre>
+<pre>
+streamlit run app.py
 </pre>
 
 ## File Structure
+```text
+roster_project_main/
 ├── src/                # Core logic (engine, models)
 ├── data/               # Example Excel files
 ├── tests/              # Unit tests for constraints
 ├── app.py              # Streamlit UI
-├── generate_data.py    # Generate test file
-└── requirements.txt
+├── generate_data.py    # Script to generate test staff data
+└── requirements.txt    # Python dependencies```
