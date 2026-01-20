@@ -2,7 +2,7 @@
 venv/
 
 # Ignore changine files
-full_year_2026_staff.xlsx
+data/*.xlsx
 
 # Ignore Python cache
 __pycache__/

@@ -1,8 +1,17 @@
 import pandas as pd
 import random
 from datetime import date, timedelta
+import os
 
 def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
+    # 1. Create the 'data' directory if it doesn't exist
+    folder = "data"
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+    # 2. Join the folder name with the filename
+    filepath = os.path.join(folder, filename)
+    
     names = [
         "Aaron Tan", "Beatrice Lim", "Charlie Ng", "David Seah", "Elena Gomez", 
         "Farhan Idris", "Grace Wong", "Hanafi Ali", "Isaac Low", "Jasmine Kaur",
@@ -63,7 +72,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
         })
 
     df = pd.DataFrame(data)
-    with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='2026_Master_List')
         workbook, worksheet = writer.book, writer.sheets['2026_Master_List']
         header_fmt = workbook.add_format({'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white', 'border': 1})
@@ -71,7 +80,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
             worksheet.write(0, col_num, value, header_fmt)
             worksheet.set_column(col_num, col_num, 20)
 
-    print(f"✅ Created '{filename}' with PH Bidding columns.")
+    print(f"✅ Created '{filepath}' inside the '{folder}' folder.")
 
 if __name__ == "__main__":
     generate_full_year_staff_data()
