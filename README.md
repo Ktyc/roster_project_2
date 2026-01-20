@@ -70,8 +70,4 @@ roster_project_main/
 ├── app.py                    # Streamlit UI entry point
 ├── README.md                 # Project documentation
 └── requirements.txt          # Python dependencies
-<<<<<<< HEAD
 ```
-=======
-```
->>>>>>> 88b11f5 (Improved file structure and updated README.md)
