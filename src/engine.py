@@ -134,7 +134,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                     if shift.date.weekday() < 5 and staff.role == Role.WEEKEND_ONLY:
                         model.Add(assignments[(staff.name, s_idx)] == 0)
 
-    # --- NEW: Internal Immunity (The "Alice" Rule) ---
+    # --- Internal Immunity ---
     # Prevent anyone from being assigned two PH shifts within 30 days of each other
     ph_indices = [i for i, s in enumerate(shifts) if s.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]]
 
@@ -150,11 +150,6 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                 if abs((date1 - date2).days) < 30:
                     # Rule: Assignment to PH1 + Assignment to PH2 <= 1 (Cannot do both)
                     model.Add(assignments[(staff.name, idx1)] + assignments[(staff.name, idx2)] <= 1)
-
-
-
-
-
 
     # Soft Constraint: Fairness
     # Create a dictionary to hold the TOTAL points for each staff

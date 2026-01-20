@@ -1,2 +1,4 @@
-1. How to update last_PH hence PH_immunity when Staff is assigned during roster generation?
-2. Return in proper excel format
+1. bid for specific ph shifts and not dates 
+2. when crash?
+
+
